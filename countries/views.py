@@ -33,6 +33,23 @@ def countries_list(request):
     serializer = CountrySerializer(qs, many=True)
     return Response(serializer.data)
 
+# copy into countries/views.py (temporary, remove after debugging)
+from django.conf import settings
+import traceback
+
+@api_view(['GET'])
+def countries_list(request):
+    try:
+        # ... original code ...
+        qs = Country.objects.all()
+        # filters...
+        serializer = CountrySerializer(qs, many=True)
+        return Response(serializer.data)
+    except Exception:
+        if getattr(settings, "DEBUG", False):
+            return Response({"error":"Internal server error","traceback":traceback.format_exc()}, status=500)
+        return Response({"error":"Internal server error"}, status=500)
+
 @api_view(['GET'])
 def country_detail(request, name):
     try:
