@@ -14,6 +14,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import urllib.parse as urlparse
 
 load_dotenv()
 
@@ -97,38 +98,50 @@ WSGI_APPLICATION = 'country_api.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-import dj_database_url
 
-DATABASE_URL = os.getenv('DATABASE_URL', None)
 
-if DATABASE_URL and DATABASE_URL.startswith('mysql://'):
-    # Railway provides DATABASE_URL
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
-else:
-    # Fallback
+# Read flag from .env (you already load .env earlier)
+USE_SQLITE = os.getenv('USE_SQLITE', 'False').lower() in ('1', 'true', 'yes')
+
+if USE_SQLITE:
+    # Simple sqlite config — Django will create db.sqlite3 in project root
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv('DB_NAME', 'railway_country_api'),
-            'USER': os.getenv('DB_USER', 'root'),
-            'PASSWORD': os.getenv('DB_PASSWORD', ''),
-            'HOST': os.getenv('DB_HOST', 'localhost'),
-            'PORT': os.getenv('DB_PORT', '3306'),
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+else:
+    # Prefer DATABASE_URL if set (Railway provides this), otherwise use DB_* vars
+    DATABASE_URL = os.getenv('DATABASE_URL')
+    if DATABASE_URL:
+        parsed = urlparse.urlparse(DATABASE_URL)
+        scheme = parsed.scheme or ''
+        engine = 'django.db.backends.postgresql' if scheme.startswith('postgres') else 'django.db.backends.mysql'
+        DATABASES = {
+            'default': {
+                'ENGINE': engine,
+                'NAME': parsed.path.lstrip('/'),
+                'USER': parsed.username,
+                'PASSWORD': parsed.password,
+                'HOST': parsed.hostname,
+                'PORT': parsed.port or (5432 if scheme.startswith('postgres') else 3306),
+            }
+        }
+    else:
+        # explicit DB_* env vars
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': os.getenv('DB_NAME', 'country_cache_db'),
+                'USER': os.getenv('DB_USER', 'root'),
+                'PASSWORD': os.getenv('DB_PASSWORD', ''),
+                'HOST': os.getenv('DB_HOST', '127.0.0.1'),
+                'PORT': os.getenv('DB_PORT', '3306'),
+                'OPTIONS': {'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"},
+            }
+        }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 
 # Password validation
