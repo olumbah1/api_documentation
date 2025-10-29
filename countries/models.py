@@ -11,7 +11,13 @@ class Country(models.Model):
     estimated_gdp = models.FloatField(null=True, blank=True)
     flag_url = models.URLField(null=True, blank=True)
     last_refreshed_at = models.DateTimeField(null=True, blank=True)
-
-
+    
+    
+    class Meta:
+        db_table = 'countries'
+        indexes = [
+            models.Index(fields=['name']),
+        ]
+    
     def __str__(self):
         return self.name

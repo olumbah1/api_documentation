@@ -1,11 +1,10 @@
 from django.urls import path
-from . import views
+from .views import RefreshCountriesView, CountriesListView, CountryDetailView, StatusView, CountryImageView
 
 urlpatterns = [
-    path('countries/refresh', views.refresh_view),
-    path('countries/image', views.image_view),
-    path('countries', views.countries_list),
-    path('countries/<str:name>', views.country_detail),
-    path('countries/<str:name>/delete', views.country_delete),
-    path('status', views.status_view),
+    path('countries/refresh', RefreshCountriesView.as_view(), name='countries-refresh'),
+    path('countries', CountriesListView.as_view(), name='countries-list'),
+    path('countries/image', CountryImageView.as_view(), name='countries-image'),
+    path('countries/<str:name>', CountryDetailView.as_view(), name='country-detail'),
+    path('status', StatusView.as_view(), name='status'),
 ]
