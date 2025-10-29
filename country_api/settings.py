@@ -20,7 +20,14 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+
+
+# Project root (two levels up from this file if settings.py is in project/project/settings.py)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+env_path = PROJECT_ROOT / ".env"
+
+# load .env into environment variables for entire Django process
+load_dotenv(dotenv_path=env_path)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -45,7 +52,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -53,6 +59,20 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+}
+
 
 ROOT_URLCONF = 'country_api.urls'
 
@@ -149,3 +169,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 EXTERNAL_COUNTRIES_API = os.getenv('EXTERNAL_COUNTRIES_API')
 EXTERNAL_EXCHANGE_API = os.getenv('EXTERNAL_EXCHANGE_API')
 SUMMARY_IMAGE_PATH = os.getenv('SUMMARY_IMAGE_PATH', os.path.join(BASE_DIR, 'cache', 'summary.png'))
+
+MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
